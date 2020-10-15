@@ -1,6 +1,6 @@
 import os
 
-from pygluu.containerlib.utils import exec_cmd
+from jans.pycloudlib.utils import exec_cmd
 
 DEFAULT_SIG_KEYS = "RS256 RS384 RS512 ES256 ES384 ES512 PS256 PS384 PS512 RSA1_5 RSA-OAEP"
 DEFAULT_ENC_KEYS = DEFAULT_SIG_KEYS

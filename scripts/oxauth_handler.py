@@ -8,16 +8,16 @@ from ldap3 import Server
 from ldap3 import BASE
 from ldap3 import MODIFY_REPLACE
 
-from pygluu.containerlib.persistence.couchbase import CouchbaseClient
-from pygluu.containerlib.persistence.couchbase import get_couchbase_user
-from pygluu.containerlib.persistence.couchbase import get_couchbase_password
-from pygluu.containerlib.utils import decode_text
-from pygluu.containerlib.utils import encode_text
-from pygluu.containerlib.utils import exec_cmd
-from pygluu.containerlib.utils import generate_base64_contents
-from pygluu.containerlib.utils import as_boolean
-from pygluu.containerlib.meta import DockerMeta
-from pygluu.containerlib.meta import KubernetesMeta
+from jans.pycloudlib.persistence.couchbase import CouchbaseClient
+from jans.pycloudlib.persistence.couchbase import get_couchbase_user
+from jans.pycloudlib.persistence.couchbase import get_couchbase_password
+from jans.pycloudlib.utils import decode_text
+from jans.pycloudlib.utils import encode_text
+from jans.pycloudlib.utils import exec_cmd
+from jans.pycloudlib.utils import generate_base64_contents
+from jans.pycloudlib.utils import as_boolean
+from jans.pycloudlib.meta import DockerMeta
+from jans.pycloudlib.meta import KubernetesMeta
 
 from base_handler import BaseHandler
 from settings import LOGGING_CONFIG
@@ -159,8 +159,8 @@ class OxauthHandler(BaseHandler):
     def __init__(self, manager, dry_run, **opts):
         super(OxauthHandler, self).__init__(manager, dry_run, **opts)
 
-        persistence_type = os.environ.get("GLUU_PERSISTENCE_TYPE", "ldap")
-        ldap_mapping = os.environ.get("GLUU_PERSISTENCE_LDAP_MAPPING", "default")
+        persistence_type = os.environ.get("JANS_PERSISTENCE_TYPE", "ldap")
+        ldap_mapping = os.environ.get("JANS_PERSISTENCE_LDAP_MAPPING", "default")
 
         if persistence_type in ("ldap", "couchbase"):
             backend_type = persistence_type
@@ -173,7 +173,7 @@ class OxauthHandler(BaseHandler):
 
         # resolve backend
         if backend_type == "ldap":
-            host = os.environ.get("GLUU_LDAP_URL", "localhost:1636")
+            host = os.environ.get("JANS_LDAP_URL", "localhost:1636")
             user = manager.config.get("ldap_binddn")
             password = decode_text(
                 manager.secret.get("encoded_ox_ldap_pw"),
@@ -181,7 +181,7 @@ class OxauthHandler(BaseHandler):
             )
             backend_cls = LdapPersistence
         else:
-            host = os.environ.get("GLUU_COUCHBASE_URL", "localhost")
+            host = os.environ.get("JANS_COUCHBASE_URL", "localhost")
             user = get_couchbase_user(manager)
             password = get_couchbase_password(manager)
             backend_cls = CouchbasePersistence
@@ -190,7 +190,7 @@ class OxauthHandler(BaseHandler):
         self.rotation_interval = opts.get("interval", 48)
         self.push_keys = as_boolean(opts.get("push-to-container", True))
 
-        metadata = os.environ.get("GLUU_CONTAINER_METADATA", "docker")
+        metadata = os.environ.get("JANS_CONTAINER_METADATA", "docker")
         if metadata == "kubernetes":
             self.meta_client = KubernetesMeta()
         else:

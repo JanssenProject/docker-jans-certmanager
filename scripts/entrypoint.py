@@ -3,7 +3,7 @@ import logging.config
 
 import click
 
-from pygluu.containerlib import get_manager
+from jans.pycloudlib import get_manager
 
 from settings import LOGGING_CONFIG
 from ldap_handler import LdapHandler
