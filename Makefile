@@ -1,4 +1,4 @@
-JANS_VERSION=4.2.2
+JANS_VERSION=5.0.0
 IMAGE_NAME=janssenproject/certmanager
 UNSTABLE_VERSION=dev
 

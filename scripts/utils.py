@@ -5,6 +5,8 @@ from jans.pycloudlib.utils import exec_cmd
 DEFAULT_SIG_KEYS = "RS256 RS384 RS512 ES256 ES384 ES512 PS256 PS384 PS512 RSA1_5 RSA-OAEP"
 DEFAULT_ENC_KEYS = DEFAULT_SIG_KEYS
 
+# @TODO: change ``assert`` to another Exception
+
 
 def generate_ssl_certkey(suffix, passwd, email, hostname, org_name,
                          country_code, state, city):
@@ -70,7 +72,7 @@ def generate_openid_keys(passwd, jks_path, jwks_path, dn, exp=365, sig_keys=DEFA
 
     cmd = (
         "java -Dlog4j.defaultInitOverride=true "
-        "-jar /app/javalibs/oxauth-client.jar "
+        "-jar /app/javalibs/janssen-client.jar "
         f"-enc_keys {enc_keys} -sig_keys {sig_keys} "
         f"-dnname '{dn}' -expiration_hours {exp} "
         f"-keystore {jks_path} -keypasswd {passwd}"
@@ -87,7 +89,7 @@ def export_openid_keys(keystore, keypasswd, alias, export_file):
     cmd = " ".join([
         "java",
         "-Dlog4j.defaultInitOverride=true",
-        "-cp /app/javalibs/oxauth-client.jar",
+        "-cp /app/javalibs/janssen-client.jar",
         "org.gluu.oxauth.util.KeyExporter",
         "-keystore {}".format(keystore),
         "-keypasswd {}".format(keypasswd),

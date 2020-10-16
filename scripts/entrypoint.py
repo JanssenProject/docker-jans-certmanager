@@ -7,10 +7,10 @@ from jans.pycloudlib import get_manager
 
 from settings import LOGGING_CONFIG
 from ldap_handler import LdapHandler
-from oxauth_handler import OxauthHandler
-from oxd_handler import OxdHandler
-from oxshibboleth_handler import OxshibbolethHandler
-from passport_handler import PassportHandler
+# from oxauth_handler import OxauthHandler
+# from oxd_handler import OxdHandler
+# from oxshibboleth_handler import OxshibbolethHandler
+# from passport_handler import PassportHandler
 from scim_handler import ScimHandler
 from web_handler import WebHandler
 
@@ -20,11 +20,11 @@ logger = logging.getLogger("certmanager")
 #: Map between service name and its handler class
 SERVICE_MAP = {
     "web": WebHandler,
-    "oxshibboleth": OxshibbolethHandler,
-    "oxauth": OxauthHandler,
-    "oxd": OxdHandler,
+    # "oxshibboleth": OxshibbolethHandler,
+    # "oxauth": OxauthHandler,
+    # "oxd": OxdHandler,
     "ldap": LdapHandler,
-    "passport": PassportHandler,
+    # "passport": PassportHandler,
     "scim": ScimHandler,
 }
 

@@ -72,13 +72,14 @@ class LdapPersistence(BasePersistence):
     def __init__(self, host, user, password):
         ldap_server = Server(host, port=1636, use_ssl=True)
         self.backend = Connection(ldap_server, user, password)
+        self.namespace = os.environ.get("JANS_NAMESPACE", "jans")
 
     def get_oxauth_config(self):
         # base DN for oxAuth config
         oxauth_base = ",".join([
             "ou=oxauth",
             "ou=configuration",
-            "o=gluu",
+            f"o={self.namespace}",
         ])
 
         with self.backend as conn:
@@ -121,11 +122,12 @@ class LdapPersistence(BasePersistence):
 class CouchbasePersistence(BasePersistence):
     def __init__(self, host, user, password):
         self.backend = CouchbaseClient(host, user, password)
+        self.namespace = os.environ.get("JANS_NAMESPACE", "jans")
 
     def get_oxauth_config(self):
         req = self.backend.exec_query(
             "SELECT oxRevision, oxAuthConfDynamic, oxAuthConfWebKeys "
-            "FROM `gluu` "
+            f"FROM `{self.namespace}` "
             "USE KEYS 'configuration_oxauth'",
         )
         if not req.ok:
@@ -144,7 +146,7 @@ class CouchbasePersistence(BasePersistence):
         conf_webkeys = json.dumps(conf_webkeys)
 
         req = self.backend.exec_query(
-            f"UPDATE `gluu` USE KEYS '{id_}' "
+            f"UPDATE `{self.namespace}` USE KEYS '{id_}' "
             f"SET oxRevision={ox_rev}, oxAuthConfDynamic={conf_dynamic}, "
             f"oxAuthConfWebKeys={conf_webkeys} "
             "RETURNING oxRevision"
