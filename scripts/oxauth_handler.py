@@ -72,7 +72,7 @@ class LdapPersistence(BasePersistence):
     def __init__(self, host, user, password):
         ldap_server = Server(host, port=1636, use_ssl=True)
         self.backend = Connection(ldap_server, user, password)
-        self.namespace = os.environ.get("JANS_NAMESPACE", "jans")
+        self.namespace = os.environ.get("CLOUD_NATIVE_NAMESPACE", "jans")
 
     def get_oxauth_config(self):
         # base DN for oxAuth config
@@ -122,7 +122,7 @@ class LdapPersistence(BasePersistence):
 class CouchbasePersistence(BasePersistence):
     def __init__(self, host, user, password):
         self.backend = CouchbaseClient(host, user, password)
-        self.namespace = os.environ.get("JANS_NAMESPACE", "jans")
+        self.namespace = os.environ.get("CLOUD_NATIVE_NAMESPACE", "jans")
 
     def get_oxauth_config(self):
         req = self.backend.exec_query(
@@ -161,8 +161,8 @@ class OxauthHandler(BaseHandler):
     def __init__(self, manager, dry_run, **opts):
         super(OxauthHandler, self).__init__(manager, dry_run, **opts)
 
-        persistence_type = os.environ.get("JANS_PERSISTENCE_TYPE", "ldap")
-        ldap_mapping = os.environ.get("JANS_PERSISTENCE_LDAP_MAPPING", "default")
+        persistence_type = os.environ.get("CLOUD_NATIVE_PERSISTENCE_TYPE", "ldap")
+        ldap_mapping = os.environ.get("CLOUD_NATIVE_PERSISTENCE_LDAP_MAPPING", "default")
 
         if persistence_type in ("ldap", "couchbase"):
             backend_type = persistence_type
@@ -175,7 +175,7 @@ class OxauthHandler(BaseHandler):
 
         # resolve backend
         if backend_type == "ldap":
-            host = os.environ.get("JANS_LDAP_URL", "localhost:1636")
+            host = os.environ.get("CLOUD_NATIVE_LDAP_URL", "localhost:1636")
             user = manager.config.get("ldap_binddn")
             password = decode_text(
                 manager.secret.get("encoded_ox_ldap_pw"),
@@ -183,7 +183,7 @@ class OxauthHandler(BaseHandler):
             )
             backend_cls = LdapPersistence
         else:
-            host = os.environ.get("JANS_COUCHBASE_URL", "localhost")
+            host = os.environ.get("CLOUD_NATIVE_COUCHBASE_URL", "localhost")
             user = get_couchbase_user(manager)
             password = get_couchbase_password(manager)
             backend_cls = CouchbasePersistence
@@ -192,7 +192,7 @@ class OxauthHandler(BaseHandler):
         self.rotation_interval = opts.get("interval", 48)
         self.push_keys = as_boolean(opts.get("push-to-container", True))
 
-        metadata = os.environ.get("JANS_CONTAINER_METADATA", "docker")
+        metadata = os.environ.get("CLOUD_NATIVE_CONTAINER_METADATA", "docker")
         if metadata == "kubernetes":
             self.meta_client = KubernetesMeta()
         else:
