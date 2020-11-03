@@ -6,7 +6,7 @@ The container designed to run as one-time command (or Job in kubernetes world).
 ## Versions
 
 See [Releases](https://github.com/JanssenProject/docker-jans-certmanager/releases) for stable versions.
-For bleeding-edge/unstable version, use `janssenproject/certmanager:5.00_dev`.
+For bleeding-edge/unstable version, use `janssenproject/certmanager:5.0.0_dev`.
 
 ## Environment Variables
 
@@ -90,7 +90,7 @@ Supported services:
 
     - `source`: `from-files` or empty string
 
-1.  `oxauth`
+1.  `auth`
 
     Re-generate:
 
@@ -100,7 +100,7 @@ Supported services:
     Options:
 
     - `interval`: cryto keys expiration time (in hours)
-    - `push-to-container`: whether to _push_ `oxauth-keys.jks` and `oxauth-keys.json` to oxAuth containers (default to `true`)
+    - `push-to-container`: whether to _push_ `oxauth-keys.jks` and `oxauth-keys.json` to auth-server containers (default to `true`)
 
 1.  `ldap`
 
@@ -115,26 +115,8 @@ Supported services:
 
     - `subj-alt-name`: Subject Alternative Name (SAN) for certificate (default to `localhost`)
 
-1.  `passport`
 
-    Re-generate:
-
-    - `/etc/certs/passport-rs.jks`
-    - `/etc/certs/passport-rs-keys.json`
-    - `/etc/certs/passport-rp.jks`
-    - `/etc/certs/passport-rp-keys.json`
-    - `/etc/certs/passport-rp.pem`
-    - `/etc/certs/passport-sp.key`
-    - `/etc/certs/passport-sp.crt`
-
-1.  `scim`
-
-    Re-generate:
-
-    - `/etc/certs/scim-rs.jks`
-    - `/etc/certs/scim-rs-keys.json`
-    - `/etc/certs/scim-rp.jks`
-    - `/etc/certs/scim-rp-keys.json`
+## Examples
 
 Docker example:
 

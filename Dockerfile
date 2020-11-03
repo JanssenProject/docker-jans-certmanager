@@ -15,7 +15,7 @@ RUN apk update \
 # @TODO: get JARs from jans-auth-server
 # JAR files required to generate OpenID Connect keys
 ENV CN_VERSION=5.0.0-SNAPSHOT
-ENV CN_BUILD_DATE="2020-10-17 19:42"
+ENV CN_BUILD_DATE="2020-11-02 18:12"
 ENV CN_SOURCE_URL=https://maven.jans.io/maven/io/jans/jans-auth-client/${CN_VERSION}/jans-auth-client-${CN_VERSION}-jar-with-dependencies.jar
 
 RUN wget -q ${CN_SOURCE_URL} -P /app/javalibs/
