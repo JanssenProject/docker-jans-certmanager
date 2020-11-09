@@ -54,6 +54,7 @@ The following environment variables are supported by the container:
 The following commands are supported by the container:
 
 - `patch`
+- `prune`
 
 #### patch
 
@@ -65,11 +66,9 @@ Usage: certmanager patch [OPTIONS] SERVICE
   Patch cert and/or crypto keys for the targeted service.
 
 Options:
-  --dry-run                       Generate save certs and/or crypto keys only
-                                  without saving it to external backends.
-  --opts KEY:VALUE                Options for targeted service (can be set
-                                  multiple times).
-  -h, --help                      Show this message and exit.
+  --dry-run         Enable dryrun mode.
+  --opts KEY:VALUE  Options for targeted service (can be set multiple times).
+  -h, --help        Show this message and exit.
 ```
 
 Global options:
@@ -115,8 +114,41 @@ Supported services:
 
     - `subj-alt-name`: Subject Alternative Name (SAN) for certificate (default to `localhost`)
 
+#### prune
 
-## Examples
+Delete expired crypto keys (if any) related to the service.
+
+```
+Usage: certmanager prune [OPTIONS] SERVICE
+
+  Cleanup expired crypto keys for the targeted service.
+
+Options:
+  --dry-run         Enable dryrun mode.
+  --opts KEY:VALUE  Options for targeted service (can be set multiple times).
+  -h, --help        Show this message and exit.
+```
+
+Global options:
+
+- `--dry-run`
+- `--opts`: service-dependent options, example: `--opts interval:48`
+
+Supported services:
+
+1.  `auth`
+
+    Delete expired keys (if any) from the following files:
+
+    - `/etc/certs/oxauth-keys.json`
+    - `/etc/certs/oxauth-keys.jks`
+
+    Options:
+
+    - `push-to-container`: whether to _push_ `oxauth-keys.jks` and `oxauth-keys.json` to oxAuth containers (default to `true`)
+
+
+### Examples
 
 Docker example:
 
