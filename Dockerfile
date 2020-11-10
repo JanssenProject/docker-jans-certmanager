@@ -35,7 +35,6 @@ RUN wget -q ${CN_SOURCE_URL} -P /app/javalibs/
 # Python
 # ======
 
-RUN apk add --no-cache #py3-cryptography
 COPY requirements.txt /app/requirements.txt
 RUN pip3 install --no-cache-dir -U pip \
     && pip3 install --no-cache-dir -r /app/requirements.txt \
