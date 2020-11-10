@@ -59,7 +59,8 @@ def generate_openid_keys(passwd, jks_path, dn, exp=48):
 
     cmd = (
         "java -Dlog4j.defaultInitOverride=true "
-        "-jar /app/javalibs/oxauth-client.jar "
+        "-cp /app/javalibs/* "
+        "io.jans.as.client.util.KeyGenerator "
         f"-enc_keys {ENC_KEYS} -sig_keys {SIG_KEYS} "
         f"-dnname '{dn}' -expiration_hours {exp} "
         f"-keystore {jks_path} -keypasswd {passwd}"
@@ -261,7 +262,7 @@ class AuthHandler(BaseHandler):
 
         if not config:
             # search failed due to missing entry
-            logger.warning("Unable to find auth-server config")
+            logger.warning("Unable to find jans-auth config")
             return
 
         try:
@@ -272,7 +273,7 @@ class AuthHandler(BaseHandler):
         if conf_dynamic["keyRegenerationEnabled"]:
             logger.warning("keyRegenerationEnabled config was set to true; "
                            "skipping proccess to avoid conflict with "
-                           "builtin key rotation feature in auth-server")
+                           "builtin key rotation feature in jans-auth")
             return
 
         jks_pass = self.manager.secret.get("oxauth_openid_jks_pass")
@@ -303,11 +304,11 @@ class AuthHandler(BaseHandler):
         oxauth_containers = []
 
         if self.push_keys:
-            oxauth_containers = self.meta_client.get_containers("APP_NAME=auth-server")
+            oxauth_containers = self.meta_client.get_containers("APP_NAME=jans-auth")
             if not oxauth_containers:
                 logger.warning(
-                    "Unable to find any auth-server container; make sure "
-                    "to deploy auth-server and set APP_NAME=auth-server "
+                    "Unable to find any jans-auth container; make sure "
+                    "to deploy jans-auth and set APP_NAME=jans-auth "
                     "label on container level"
                 )
                 # exit immediately to avoid persistence/secrets being modified
@@ -330,7 +331,7 @@ class AuthHandler(BaseHandler):
             with open(jwks_fn) as f:
                 keys = json.loads(f.read())
 
-            logger.info("modifying auth-server configuration")
+            logger.info("modifying jans-auth configuration")
             ox_rev = int(config["jansRevision"])
             ox_modified = self.backend.modify_oxauth_config(
                 config["id"],
@@ -341,7 +342,7 @@ class AuthHandler(BaseHandler):
 
             if not ox_modified:
                 # restore jks and jwks
-                logger.warning("failed to modify auth-server configuration")
+                logger.warning("failed to modify jans-auth configuration")
                 for container in oxauth_containers:
                     name = self.meta_client.get_container_name(container)
                     logger.info(f"restoring backup of {name}:{jks_fn}")
@@ -366,7 +367,7 @@ class AuthHandler(BaseHandler):
 
         if not config:
             # search failed due to missing entry
-            logger.warning("Unable to find auth-server config")
+            logger.warning("Unable to find jans-auth config")
             return
 
         try:
@@ -377,7 +378,7 @@ class AuthHandler(BaseHandler):
         if conf_dynamic["keyRegenerationEnabled"]:
             logger.warning("keyRegenerationEnabled config was set to true; "
                            "skipping proccess to avoid conflict with "
-                           "builtin key rotation feature in auth-server")
+                           "builtin key rotation feature in jans-auth")
             return
 
         jks_pass = self.manager.secret.get("oxauth_openid_jks_pass")
@@ -423,11 +424,11 @@ class AuthHandler(BaseHandler):
         oxauth_containers = []
 
         if self.push_keys:
-            oxauth_containers = self.meta_client.get_containers("APP_NAME=auth-server")
+            oxauth_containers = self.meta_client.get_containers("APP_NAME=jans-auth")
             if not oxauth_containers:
                 logger.warning(
-                    "Unable to find any auth-server container; make sure "
-                    "to deploy auth-server and set APP_NAME=auth-server "
+                    "Unable to find any jans-auth container; make sure "
+                    "to deploy jans-auth and set APP_NAME=jans-auth "
                     "label on container level"
                 )
                 # exit immediately to avoid persistence/secrets being modified
@@ -450,7 +451,7 @@ class AuthHandler(BaseHandler):
             with open(jwks_fn) as f:
                 keys = json.loads(f.read())
 
-            logger.info("modifying auth-server configuration")
+            logger.info("modifying jans-auth configuration")
             ox_rev = int(config["jansRevision"])
             ox_modified = self.backend.modify_oxauth_config(
                 config["id"],
@@ -461,7 +462,7 @@ class AuthHandler(BaseHandler):
 
             if not ox_modified:
                 # restore jks and jwks
-                logger.warning("failed to modify auth-server configuration")
+                logger.warning("failed to modify jans-auth configuration")
                 for container in oxauth_containers:
                     name = self.meta_client.get_container_name(container)
                     logger.info(f"restoring backup of {name}:{jks_fn}")
