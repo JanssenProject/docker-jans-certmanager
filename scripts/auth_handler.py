@@ -203,6 +203,7 @@ class AuthHandler(BaseHandler):
         self.push_keys = as_boolean(opts.get("push-to-container", True))
         self.key_strategy = opts.get("key-strategy", "OLDER")
         self.privkey_push_delay = opts.get("privkey-push-delay", 0)
+        self.privkey_push_strategy = opts.get("privkey-push-strategy", "OLDER")
 
         metadata = os.environ.get("CN_CONTAINER_METADATA", "docker")
         if metadata == "kubernetes":
@@ -262,9 +263,14 @@ class AuthHandler(BaseHandler):
         return jwks_fn, jks_fn
 
     def patch(self):
+        strategies = ", ".join(KEY_STRATEGIES)
+
         if self.key_strategy not in KEY_STRATEGIES:
-            strategies = ", ".join(KEY_STRATEGIES)
             logger.error(f"Key strategy must be one of {strategies}")
+            sys.exit(1)
+
+        if self.privkey_push_strategy not in KEY_STRATEGIES:
+            logger.error(f"Private key push strategy must be one of {strategies}")
             sys.exit(1)
 
         push_delay_invalid = False
@@ -322,11 +328,11 @@ class AuthHandler(BaseHandler):
         if self.dry_run:
             return
 
-        oxauth_containers = []
+        auth_containers = []
 
         if self.push_keys:
-            oxauth_containers = self.meta_client.get_containers("APP_NAME=jans-auth")
-            if not oxauth_containers:
+            auth_containers = self.meta_client.get_containers("APP_NAME=jans-auth")
+            if not auth_containers:
                 logger.warning(
                     "Unable to find any jans-auth container; make sure "
                     "to deploy jans-auth and set APP_NAME=jans-auth "
@@ -335,7 +341,7 @@ class AuthHandler(BaseHandler):
                 # exit immediately to avoid persistence/secrets being modified
                 return
 
-        for container in oxauth_containers:
+        for container in auth_containers:
             name = self.meta_client.get_container_name(container)
 
             logger.info(f"creating backup of {name}:{jwks_fn}")
@@ -357,10 +363,11 @@ class AuthHandler(BaseHandler):
                 keys = json.loads(f.read())
 
             logger.info("modifying jans-auth configuration")
-            ox_rev = int(config["jansRevision"])
+            logger.info(f"using keySelectionStrategy {self.key_strategy}")
+            ox_rev = int(config["oxRevision"]) + 1
             ox_modified = self.backend.modify_oxauth_config(
                 config["id"],
-                ox_rev + 1,
+                ox_rev,
                 conf_dynamic,
                 keys,
             )
@@ -368,7 +375,7 @@ class AuthHandler(BaseHandler):
             if not ox_modified:
                 # restore jks and jwks
                 logger.warning("failed to modify jans-auth configuration")
-                for container in oxauth_containers:
+                for container in auth_containers:
                     logger.info(f"restoring backup of {name}:{jwks_fn}")
                     self.meta_client.exec_cmd(container, f"cp {jwks_fn}.backup {jwks_fn}")
 
@@ -396,10 +403,26 @@ class AuthHandler(BaseHandler):
             if int(self.privkey_push_delay) > 0:
                 logger.info(f"Waiting for private key push delay ({int(self.privkey_push_delay)} seconds) ...")
                 time.sleep(int(self.privkey_push_delay))
-                for container in oxauth_containers:
+                for container in auth_containers:
                     logger.info(f"creating new {name}:{jks_fn}")
                     self.meta_client.copy_to_container(container, jks_fn)
                 self.manager.secret.set("oxauth_jks_base64", encode_jks(self.manager))
+
+                # key selection is changed
+                if self.privkey_push_strategy != self.key_strategy:
+                    ox_rev = ox_rev + 1
+                    conf_dynamic.update({
+                        "keySelectionStrategy": self.privkey_push_strategy,
+                    })
+
+                    logger.info(f"using keySelectionStrategy {self.privkey_push_strategy}")
+
+                    self.backend.modify_oxauth_config(
+                        config["id"],
+                        ox_rev,
+                        conf_dynamic,
+                        keys,
+                    )
         except (TypeError, ValueError,) as exc:
             logger.warning(f"Unable to get public keys; reason={exc}")
 
@@ -462,11 +485,11 @@ class AuthHandler(BaseHandler):
         if not should_update:
             return
 
-        oxauth_containers = []
+        auth_containers = []
 
         if self.push_keys:
-            oxauth_containers = self.meta_client.get_containers("APP_NAME=jans-auth")
-            if not oxauth_containers:
+            auth_containers = self.meta_client.get_containers("APP_NAME=jans-auth")
+            if not auth_containers:
                 logger.warning(
                     "Unable to find any jans-auth container; make sure "
                     "to deploy jans-auth and set APP_NAME=jans-auth "
@@ -475,7 +498,7 @@ class AuthHandler(BaseHandler):
                 # exit immediately to avoid persistence/secrets being modified
                 return
 
-        for container in oxauth_containers:
+        for container in auth_containers:
             name = self.meta_client.get_container_name(container)
 
             logger.info(f"creating backup of {name}:{jks_fn}")
@@ -504,7 +527,7 @@ class AuthHandler(BaseHandler):
             if not ox_modified:
                 # restore jks and jwks
                 logger.warning("failed to modify jans-auth configuration")
-                for container in oxauth_containers:
+                for container in auth_containers:
                     name = self.meta_client.get_container_name(container)
                     logger.info(f"restoring backup of {name}:{jks_fn}")
                     self.meta_client.exec_cmd(container, f"cp {jks_fn}.backup {jks_fn}")
