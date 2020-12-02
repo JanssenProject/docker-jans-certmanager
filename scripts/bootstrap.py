@@ -8,7 +8,7 @@ from jans.pycloudlib import get_manager
 from settings import LOGGING_CONFIG
 from ldap_handler import LdapHandler
 from auth_handler import AuthHandler
-# from oxd_handler import OxdHandler
+from client_api_handler import ClientApiHandler
 # from oxshibboleth_handler import OxshibbolethHandler
 # from passport_handler import PassportHandler
 from scim_handler import ScimHandler
@@ -22,7 +22,7 @@ PATCH_SERVICE_MAP = {
     "web": WebHandler,
     # "oxshibboleth": OxshibbolethHandler,
     "auth": AuthHandler,
-    # "oxd": OxdHandler,
+    "client-api": ClientApiHandler,
     "ldap": LdapHandler,
     # "passport": PassportHandler,
     "scim": ScimHandler,

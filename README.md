@@ -149,6 +149,21 @@ Supported services:
 
     - `push-to-container`: whether to _push_ `oxauth-keys.jks` and `oxauth-keys.json` to oxAuth containers (default to `true`)
 
+1.  `client-api`
+
+    Re-generate:
+
+    - `/etc/certs/client_api_application.crt`
+    - `/etc/certs/client_api_application.key`
+    - `/etc/certs/client_api_application.keystore`
+    - `/etc/certs/client_api_admin.crt`
+    - `/etc/certs/client_api_admin.key`
+    - `/etc/certs/client_api_admin.keystore`
+
+    Options:
+
+    - `application-cn`: Subject alternative name for application certificate (default to `localhost`)
+    - `admin-cn`: Subject alternative name for admin certificate (default to `localhost`)
 
 ### Examples
 
