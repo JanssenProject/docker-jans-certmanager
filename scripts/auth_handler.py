@@ -71,10 +71,10 @@ def generate_openid_keys(passwd, jks_path, dn, exp=48):
 
 
 class BasePersistence(object):
-    def get_oxauth_config(self):
+    def get_auth_config(self):
         raise NotImplementedError
 
-    def modify_oxauth_config(self, id_, ox_rev, conf_dynamic, conf_webkeys):
+    def modify_auth_config(self, id_, rev, conf_dynamic, conf_webkeys):
         raise NotImplementedError
 
 
@@ -84,17 +84,17 @@ class LdapPersistence(BasePersistence):
         self.backend = Connection(ldap_server, user, password)
         self.namespace = os.environ.get("CN_NAMESPACE", "jans")
 
-    def get_oxauth_config(self):
-        # base DN for oxAuth config
-        oxauth_base = ",".join([
-            "ou=oxauth",
+    def get_auth_config(self):
+        # base DN for auth config
+        auth_base = ",".join([
+            "ou=jans-auth",
             "ou=configuration",
             f"o={self.namespace}",
         ])
 
         with self.backend as conn:
             conn.search(
-                search_base=oxauth_base,
+                search_base=auth_base,
                 search_filter="(objectClass=*)",
                 search_scope=BASE,
                 attributes=[
@@ -117,10 +117,10 @@ class LdapPersistence(BasePersistence):
             }
             return config
 
-    def modify_oxauth_config(self, id_, ox_rev, conf_dynamic, conf_webkeys):
+    def modify_auth_config(self, id_, rev, conf_dynamic, conf_webkeys):
         with self.backend as conn:
             conn.modify(id_, {
-                'jansRevision': [(MODIFY_REPLACE, [str(ox_rev)])],
+                'jansRevision': [(MODIFY_REPLACE, [str(rev)])],
                 'jansConfWebKeys': [(MODIFY_REPLACE, [json.dumps(conf_webkeys)])],
                 'jansConfDyn': [(MODIFY_REPLACE, [json.dumps(conf_dynamic)])],
             })
@@ -134,7 +134,7 @@ class CouchbasePersistence(BasePersistence):
         self.backend = CouchbaseClient(host, user, password)
         self.namespace = os.environ.get("CN_NAMESPACE", "jans")
 
-    def get_oxauth_config(self):
+    def get_auth_config(self):
         req = self.backend.exec_query(
             "SELECT jansRevision, jansConfDyn, jansConfWebKeys "
             f"FROM `{self.namespace}` "
@@ -151,13 +151,13 @@ class CouchbasePersistence(BasePersistence):
         config.update({"id": "configuration_jans-auth"})
         return config
 
-    def modify_oxauth_config(self, id_, ox_rev, conf_dynamic, conf_webkeys):
+    def modify_auth_config(self, id_, rev, conf_dynamic, conf_webkeys):
         conf_dynamic = json.dumps(conf_dynamic)
         conf_webkeys = json.dumps(conf_webkeys)
 
         req = self.backend.exec_query(
             f"UPDATE `{self.namespace}` USE KEYS '{id_}' "
-            f"SET jansRevision={ox_rev}, jansConfDyn={conf_dynamic}, "
+            f"SET jansRevision={rev}, jansConfDyn={conf_dynamic}, "
             f"jansConfWebKeys={conf_webkeys} "
             "RETURNING jansRevision"
         )
@@ -284,7 +284,7 @@ class AuthHandler(BaseHandler):
             logger.error("Invalid integer value for private key push delay")
             sys.exit(1)
 
-        config = self.backend.get_oxauth_config()
+        config = self.backend.get_auth_config()
 
         if not config:
             # search failed due to missing entry
@@ -364,15 +364,15 @@ class AuthHandler(BaseHandler):
 
             logger.info("modifying jans-auth configuration")
             logger.info(f"using keySelectionStrategy {self.key_strategy}")
-            ox_rev = int(config["oxRevision"]) + 1
-            ox_modified = self.backend.modify_oxauth_config(
+            rev = int(config["jansRevision"]) + 1
+            modified = self.backend.modify_auth_config(
                 config["id"],
-                ox_rev,
+                rev,
                 conf_dynamic,
                 keys,
             )
 
-            if not ox_modified:
+            if not modified:
                 # restore jks and jwks
                 logger.warning("failed to modify jans-auth configuration")
                 for container in auth_containers:
@@ -410,16 +410,16 @@ class AuthHandler(BaseHandler):
 
                 # key selection is changed
                 if self.privkey_push_strategy != self.key_strategy:
-                    ox_rev = ox_rev + 1
+                    rev = rev + 1
                     conf_dynamic.update({
                         "keySelectionStrategy": self.privkey_push_strategy,
                     })
 
                     logger.info(f"using keySelectionStrategy {self.privkey_push_strategy}")
 
-                    self.backend.modify_oxauth_config(
+                    self.backend.modify_auth_config(
                         config["id"],
-                        ox_rev,
+                        rev,
                         conf_dynamic,
                         keys,
                     )
@@ -427,7 +427,7 @@ class AuthHandler(BaseHandler):
             logger.warning(f"Unable to get public keys; reason={exc}")
 
     def prune(self):
-        config = self.backend.get_oxauth_config()
+        config = self.backend.get_auth_config()
 
         if not config:
             # search failed due to missing entry
@@ -516,15 +516,15 @@ class AuthHandler(BaseHandler):
                 keys = json.loads(f.read())
 
             logger.info("modifying jans-auth configuration")
-            ox_rev = int(config["jansRevision"])
-            ox_modified = self.backend.modify_oxauth_config(
+            rev = int(config["jansRevision"])
+            modified = self.backend.modify_auth_config(
                 config["id"],
-                ox_rev + 1,
+                rev + 1,
                 conf_dynamic,
                 keys,
             )
 
-            if not ox_modified:
+            if not modified:
                 # restore jks and jwks
                 logger.warning("failed to modify jans-auth configuration")
                 for container in auth_containers:
